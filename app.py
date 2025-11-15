@@ -9,7 +9,7 @@ app = Flask(__name__)
 CORS(app)
 
 
-# --- (YOUR COLOR GENERATOR FUNCTIONS - UNCHANGED) ---
+# --- (YOUR COLOUR GENERATOR FUNCTIONS) ---
 
 def hsl_to_hex(h, s, l):
     h_norm = h / 360.0
@@ -23,9 +23,11 @@ def hsl_to_hex(h, s, l):
 
 def generate_color_final(input_string, color_type="name", position_index=0):
     if color_type == 'date':
+        # Date logic: Keep only numbers
         normalized_string = re.sub(r'[^0-9]', '', input_string)
     else:
-        normalized_string = re.sub(r'[^a-zA-Z]', '', input_string).lower()
+        # Name logic: Keep letters AND numbers, then lowercase
+        normalized_string = re.sub(r'[^a-zA-Z0-9]', '', input_string).lower()
 
     if not normalized_string:
         return "#CCCCCC" # Default grey
@@ -55,7 +57,7 @@ def generate_color_final(input_string, color_type="name", position_index=0):
         
     return hsl_to_hex(hue, saturation, lightness)
 
-# --- (END OF COLOR FUNCTIONS) ---
+# --- (END OF COLOUR FUNCTIONS) ---
 
 
 # --- THIS IS THE UPDATED API ENDPOINT ---
@@ -64,6 +66,7 @@ def generate_color_final(input_string, color_type="name", position_index=0):
 def generate_palette():
     """
     This function now accepts a LIST of names and a LIST of dates.
+    And uses UK spelling for "colour".
     """
     try:
         data = request.get_json()
@@ -74,27 +77,25 @@ def generate_palette():
         names_list = data.get('names', [])
         dates_list = data.get('dates', [])
 
-        # We must have at least one name
         if not names_list:
             return jsonify({"error": "No names provided"}), 400
 
-        # Process Names (This loop is the same and works perfectly)
-        generated_name_colors = []
+        # Process Names
+        generated_name_colours = [] # Renamed
         for index, name in enumerate(names_list):
-            color = generate_color_final(name, 'name', position_index=index)
-            generated_name_colors.append({"name": name, "color": color})
+            colour = generate_color_final(name, 'name', position_index=index) # Renamed
+            generated_name_colours.append({"name": name, "colour": colour}) # Renamed
         
-        # --- NEW: Process Dates ---
-        # We add a new loop to process all dates in the dates_list
-        generated_date_colors = []
+        # Process Dates
+        generated_date_colours = [] # Renamed
         for date_str in dates_list:
-            color = generate_color_final(date_str, 'date')
-            generated_date_colors.append({"name": date_str, "color": color})
+            colour = generate_color_final(date_str, 'date') # Renamed
+            generated_date_colours.append({"name": date_str, "colour": colour}) # Renamed
         
         # Build the new response
         response = {
-            "name_colors": generated_name_colors,
-            "date_colors": generated_date_colors  # New key
+            "name_colours": generated_name_colours, # Renamed
+            "date_colours": generated_date_colours  # Renamed
         }
         
         return jsonify(response)
