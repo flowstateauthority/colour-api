@@ -6,11 +6,10 @@ from flask_cors import CORS
 
 # --- This is your Flask app ---
 app = Flask(__name__)
-# This line allows your website to talk to this API
 CORS(app)
 
 
-# --- (YOUR COLOR GENERATOR FUNCTIONS) ---
+# --- (YOUR COLOR GENERATOR FUNCTIONS - UNCHANGED) ---
 
 def hsl_to_hex(h, s, l):
     h_norm = h / 360.0
@@ -56,45 +55,49 @@ def generate_color_final(input_string, color_type="name", position_index=0):
         
     return hsl_to_hex(hue, saturation, lightness)
 
-# --- (END OF YOUR COLOR FUNCTIONS) ---
+# --- (END OF COLOR FUNCTIONS) ---
 
 
-# --- This is your API "ENDPOINT" ---
+# --- THIS IS THE UPDATED API ENDPOINT ---
 
 @app.route('/generate-palette', methods=['POST'])
 def generate_palette():
     """
-    This function waits for a web request, gets the names,
-    runs your color generator, and sends the colors back.
+    This function now accepts a LIST of names and a LIST of dates.
     """
     try:
         data = request.get_json()
-        
         if not data:
             return jsonify({"error": "No data provided"}), 400
-            
-        names_list = data.get('names')
-        dob = data.get('dob')
+        
+        # Get the lists from the request. Default to empty list.
+        names_list = data.get('names', [])
+        dates_list = data.get('dates', [])
 
-        if not names_list or not dob:
-            return jsonify({"error": "Missing 'names' list or 'dob'"}), 400
+        # We must have at least one name
+        if not names_list:
+            return jsonify({"error": "No names provided"}), 400
 
-        generated_colors = []
+        # Process Names (This loop is the same and works perfectly)
+        generated_name_colors = []
         for index, name in enumerate(names_list):
             color = generate_color_final(name, 'name', position_index=index)
-            generated_colors.append({"name": name, "color": color})
-            
-        date_color = generate_color_final(dob, 'date')
+            generated_name_colors.append({"name": name, "color": color})
         
+        # --- NEW: Process Dates ---
+        # We add a new loop to process all dates in the dates_list
+        generated_date_colors = []
+        for date_str in dates_list:
+            color = generate_color_final(date_str, 'date')
+            generated_date_colors.append({"name": date_str, "color": color})
+        
+        # Build the new response
         response = {
-            "name_colors": generated_colors,
-            "date_color": {"name": dob, "color": date_color}
+            "name_colors": generated_name_colors,
+            "date_colors": generated_date_colors  # New key
         }
         
         return jsonify(response)
         
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
-# We no longer need the app.run() block at the end.
-# The server (Gunicorn) will find the 'app' object automatically.
